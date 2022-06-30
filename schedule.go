@@ -76,7 +76,7 @@ func (sched *Schedule) schedule(t *task) {
 
 func (sched *Schedule) exec(t *task) {
 	go func() {
-		err := t.runFunc()
+		err := t.runFunc(t.id)
 		if err != nil && t.onError != nil {
 			go t.onError(err)
 		}
