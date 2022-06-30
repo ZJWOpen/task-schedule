@@ -13,7 +13,7 @@ type task struct {
 	taskType  int                // type of the task
 	runFunc   func(string) error // run the task
 	onError   func(error)
-	onSucces  func()             // success handler
+	onSucces  func(string)       // success handler
 	ctx       context.Context    // context
 	cancel    context.CancelFunc // cancel
 }

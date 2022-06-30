@@ -68,20 +68,22 @@ func (sched *Schedule) remove(id string) {
 func (sched *Schedule) schedule(t *task) {
 	select {
 	default:
-		sched.exec(t)
+		go sched.exec(t)
 	case <-t.ctx.Done():
+		fmt.Println("task is cancel")
 		return
 	}
 }
 
 func (sched *Schedule) exec(t *task) {
-	go func() {
-		err := t.runFunc(t.id)
-		if err != nil && t.onError != nil {
-			go t.onError(err)
-		}
-		defer sched.remove(t.id)
-	}()
+	err := t.runFunc(t.id)
+	if err != nil && t.onError != nil {
+		go t.onError(err)
+	}
+	if t.onSucces != nil {
+		go t.onSucces(t.id)
+	}
+	defer sched.remove(t.id)
 }
 
 func (sched *Schedule) Close() {
@@ -99,4 +101,18 @@ func (sched *Schedule) all() []*task {
 		m = append(m, v)
 	}
 	return m
+}
+
+func (sched *Schedule) Stop(id string) {
+	sched.RLock()
+	defer sched.RUnlock()
+	t, ok := sched.tasks[id]
+	if ok {
+		// Stop the task
+		if t.cancel != nil {
+			defer t.cancel()
+		}
+		fmt.Println("task is stoped", id)
+		delete(sched.tasks, id)
+	}
 }
