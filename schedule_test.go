@@ -21,7 +21,6 @@ func TestSchedule(t *testing.T) {
 			WithRunFunc(runtestTaskfunc).
 			WithOnError(func(id string, err error) {
 				fmt.Println("task run failed ", id)
-				// t.Error(err)
 			}).
 			WithOnComplete(func(id string) {
 				t.Logf("task succes,%s", id)
