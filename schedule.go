@@ -76,12 +76,14 @@ func (sched *Schedule) schedule(t *task) {
 }
 
 func (sched *Schedule) exec(t *task) {
-	err := t.runFunc(t.id)
+	err := t.runFunc(t.ctx, t.cancel, t.id)
 	if err != nil && t.onError != nil {
-		go t.onError(err)
+		go t.onError(t.id, err)
 	}
-	if t.onSucces != nil {
+	if t.onSucces != nil && t.taskState == taskSucceeded {
 		go t.onSucces(t.id)
+	} else if t.onError != nil && t.taskState == taskFailed {
+		go t.onError(t.id, errors.New("task failed"))
 	}
 	defer sched.remove(t.id)
 }
