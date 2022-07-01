@@ -50,7 +50,8 @@ func (sched *Schedule) Add(task *task) error {
 	}
 
 	sched.tasks[task.id] = task
-	sched.schedule(task)
+	fmt.Println("task added")
+	go sched.schedule(task)
 	return nil
 }
 
@@ -70,20 +71,23 @@ func (sched *Schedule) schedule(t *task) {
 	default:
 		go sched.exec(t)
 	case <-t.ctx.Done():
-		fmt.Println("task is cancel")
 		return
 	}
 }
 
 func (sched *Schedule) exec(t *task) {
-	err := t.runFunc(t.ctx, t.cancel, t.id)
+	err := t.runFunc(t.ctx, t.id)
 	if err != nil && t.onError != nil {
 		go t.onError(t.id, err)
 	}
-	if t.onSucces != nil && t.taskState == taskSucceeded {
+	if t.onSucces != nil {
 		go t.onSucces(t.id)
-	} else if t.onError != nil && t.taskState == taskFailed {
-		go t.onError(t.id, errors.New("task failed"))
+	}
+	select {
+	default:
+	case <-t.ctx.Done():
+		fmt.Println("task cancelled, ", t.id)
+		return
 	}
 	defer sched.remove(t.id)
 }
