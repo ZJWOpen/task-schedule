@@ -79,14 +79,10 @@ func (sched *Schedule) exec(t *task) {
 	err := t.runFunc(t.ctx, t.id)
 	if err != nil && t.onError != nil {
 		go t.onError(t.id, err)
+		return
 	}
 	if t.onSucces != nil {
 		go t.onSucces(t.id)
-	}
-	select {
-	default:
-	case <-t.ctx.Done():
-		fmt.Println("task cancelled, ", t.id)
 		return
 	}
 	defer sched.remove(t.id)

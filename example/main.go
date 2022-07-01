@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,7 +44,7 @@ func runtestTaskfunc(ctx context.Context, id string) error {
 	select {
 	case <-ctx.Done():
 		fmt.Println("task cancelled")
-		return nil
+		return errors.New("task cancelled")
 	default:
 		time.Sleep(10 * time.Second)
 	}
