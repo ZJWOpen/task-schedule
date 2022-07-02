@@ -1,7 +1,6 @@
 package schedule
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -35,8 +34,6 @@ func (sched *Schedule) Add(task *task) error {
 		return errors.New("task.runFunc must not be nil")
 	}
 
-	task.ctx, task.cancel = context.WithCancel(context.Background())
-
 	sched.Lock()
 	defer sched.Unlock()
 	if len(sched.tasks) >= sched.limit {
@@ -61,7 +58,7 @@ func (sched *Schedule) remove(id string) {
 	t, ok := sched.tasks[id]
 	if ok {
 		// Stop the task
-		defer t.cancel()
+		defer t.stop()
 		delete(sched.tasks, id)
 	}
 }
@@ -76,7 +73,7 @@ func (sched *Schedule) schedule(t *task) {
 }
 
 func (sched *Schedule) exec(t *task) {
-	err := t.runFunc(t.ctx, t.id)
+	err := t.runFunc(t.ctx, t.id, t.timeout)
 	if err != nil && t.onError != nil {
 		go t.onError(t.id, err)
 		return
@@ -111,10 +108,7 @@ func (sched *Schedule) Stop(id string) {
 	t, ok := sched.tasks[id]
 	if ok {
 		// Stop the task
-		if t.cancel != nil {
-			defer t.cancel()
-		}
-		fmt.Println("task is stoped", id)
+		t.stop()
 		delete(sched.tasks, id)
 	}
 }
